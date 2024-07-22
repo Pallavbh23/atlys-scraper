@@ -26,18 +26,19 @@ app = FastAPI()
 async def extract_products(settings: ScrapeSettings):
     scraper = Scraper(base_url="https://dentalstall.com/shop/", proxy=settings.proxy)
     products = scraper.scrape(pages=settings.pages)
+    update_count = 0
     try:
-        update_count = 0
         for product in products:
             product['path_to_image'] = download_image(product['path_to_image'])
             updated = crud.update_product(product)
             if updated:
                 update_count += 1
-        logger.info(f'Updated {update_count} products')
     except Exception as e:
         logger.log(e)
 
     scraped_count = len(products)
-    print(f"{scraped_count} products were scraped and updated in the database.")
+    logger.info(f'Updated {update_count} products')
+    logger.info(f'Scraped {scraped_count} products')
+    
 
-    return {"scraped_count": scraped_count, "products": products}
+    return {"scraped_count": scraped_count, "updated_count": update_count, "products": products}
