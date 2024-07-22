@@ -39,6 +39,18 @@ class Scraper:
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
             return self.extract_products(soup, cache_key)
+        else:
+            retry_count = 0
+            while retry_count < 3 and response.status_code !=200:
+                response = self.session.get(url)
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    return self.extract_products(soup, cache_key)
+                else :
+                    retry_count += 1
+                    logger.info(f"Failed to fetch page {page_num}, retrying...")
+            logger.error(f"Failed to fetch page {page_num}, maximum retries exceeded")
+            
         return []
 
     def extract_products(self, soup, cache_key):
